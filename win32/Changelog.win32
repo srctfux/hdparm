@@ -1,0 +1,23 @@
+hdparm-6.9-20070228
+    - Cygwin port (patch 1668007)
+    - added /dev/sd[a-z] device names
+hdparm-6.9-20070224
+    - added identify of recent ATA-8 minor revisions (patch 1667900)
+    - added optional test duration argument to -t and -T (patch 1593726)
+hdparm-6.9-20061030
+    - merged with hdparm-6.9
+      - added SCT feature set (patch 1577615)
+      - added '-s' to control power-up in standby (patch 1579209)
+    - fixed .TP in man page (patch 1586652)
+    - fixed parameter passing of SET_FEATURES commands (-B, -M, -S)
+    - added get acoustic (-M)
+    - added --direct
+hdparm-6.6-20060901
+    - IDE+SMART ioctl for Win2000, XP<SP2 compatibility
+    - added --security-freeze
+    - device reset (-w)
+    - check power mode (-C)
+hdparm-6.6-20060818
+    - first windows prototype based on hdparm-6.6
+
+Christian Franke (chrfranke@users.sourceforge.net)

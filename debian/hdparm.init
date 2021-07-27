@@ -1,0 +1,277 @@
+#!/bin/sh
+
+set -e
+
+. /lib/lsb/init-functions
+. /etc/default/rcS
+
+#In certian cases you may wish to run this script twice.  Once at S07
+#and once later in the boot process. If you do this call /etc/init.d/hdparm
+#again from rcS.d with a name such as S27hdparm.second.
+#
+#See /usr/share/doc/hdparm/README.Debian for more details.
+
+case "$0" in
+  *hdparm)
+    FIRST=yes
+    ;;
+  *)
+    FIRST=no
+    ;;
+esac
+
+MYNAME="$0"
+
+report()
+{
+  echo "${MYNAME}: $*"
+}
+
+report_error()
+{
+  echo "${MYNAME}: Error: $*" >&2
+}
+
+report_error_and_exit()
+{
+  report_error "$*.  Exiting."
+  exit 1
+}
+
+case $1 in
+  start|restart|reload|force-reload)
+    ;;
+  stop) 
+    exit 0
+    ;;
+  *)
+    log_success_msg "Usage: $0 {stop|start|restart|reload|force-reload}"
+    exit 1
+    ;;
+esac
+
+if grep -w -q "nohdparm" /proc/cmdline ; then
+  log_success_msg "Skipping setup of disc parameters as specified..."
+  exit 0
+fi
+
+raidstat=OK
+if [ -e /proc/mdstat ]; then
+  if grep -iq resync /proc/mdstat; then
+    raidstat=RESYNC
+  fi
+elif [ -e /proc/rd/status ]; then
+  raidstat=`cat /proc/rd/status`
+fi
+
+if ! [ "$raidstat" = 'OK' ]; then
+  log_warning_msg "RAID status not OK.  Exiting."
+  exit 0
+fi
+
+log_begin_msg "Setting disc parameters..."
+
+DISC=
+DEFAULT=
+OPTIONS=
+DEF_QUIET=
+OPT_QUIET=
+
+#  set_option() adds $1 to the $OPTIONS list if in a disk stanza
+#             and adds $1 to the $DEFAULT list if not in a disk stanza
+#
+#  the block beginning:
+#        if test x${i%${i#??}} != x${1%${1#??}}; then
+#  checks to see if $1 is already in the list and
+#    if so removes the first instance
+
+set_option() 
+{
+  if test -n "$DISC"; then
+    NEW_OPT=
+    for i in $OPTIONS; do
+      if test x${i%${i#??}} != x${1%${1#??}}; then
+        NEW_OPT="$NEW_OPT $i"
+      else
+        NEW_OPT=${NEW_OPT%-q}
+      fi
+    done
+    OPTIONS="$NEW_OPT $OPT_QUIET $1"
+  else
+    NEW_DEF=
+    for i in $DEFAULT; do
+      if test x${i%${i#??}} != x${1%${1#??}}; then
+        NEW_DEF="$NEW_DEF $i"
+      else
+        NEW_DEF=${NEW_DEF%-q}
+      fi
+    done
+    DEFAULT="$NEW_DEF $DEF_QUIET $1"
+  fi
+}
+
+eval_value() 
+{
+  case $1 in
+    off|0) 
+      set_option "$2"0
+       ;;
+    on|1) 
+      set_option "$2"1
+      ;;
+    *) 
+      return 1
+      ;;
+  esac
+}
+
+# Get blocks as far as the drive's write cache.
+/bin/sync
+
+# Set options for a group of disks in /etc/default/hdparm
+[ -e /etc/default/hdparm ] && . /etc/default/hdparm
+
+if [ -n "$harddisks" -a -n "$hdparm_opts" ]; then
+  for drive in $harddisks; do 
+    /sbin/hdparm -q -f $drive
+    hdparm -q $hdparm_opts -q $drive
+    [ "$VERBOSE" != no ] && log_success_msg "Found enabled disk: $drive"
+  done
+fi
+
+egrep -v '^[[:space:]]*(#|$)' /etc/hdparm.conf | while read KEY SEP VALUE; do
+ if [ "$NEXT_LINE" != 'go' ]; then
+  case $SEP in
+    '{')
+       case $KEY in
+         command_line)
+           NEXT_LINE=go
+           unset DISC
+           unset OPTIONS
+           unset OPT_QUIET
+           ;;
+         *)
+           DISC=$KEY
+           OPTIONS=$DEFAULT
+           OPT_QUIET=$DEF_QUIET
+           WAS_RUN=0
+           ;;
+       esac
+       ;;
+    =)
+       case $KEY in
+         read_ahead_sect) 
+	   set_option -a$VALUE
+	   ;;
+	 lookahead) 
+	   eval_value $VALUE -A
+	   ;;
+	 bus) 
+	   eval_value $VALUE -b
+	   ;;
+	 apm) 
+	   set_option -B$VALUE
+	   ;;
+	 io32_support) 
+	   set_option -c$VALUE
+	   ;;
+	 dma) 
+	   eval_value $VALUE -d
+	   ;;
+	 defect_mana) 
+	   eval_value $VALUE -D
+	   ;;
+	 cd_speed) 
+	   set_option -E$VALUE
+	   ;;
+	 mult_sect_io) 
+	   set_option -m$VALUE
+	   ;;
+	 prefetch_sect) 
+	   set_option -P$VALUE
+	   ;;
+	 read_only) 
+	   eval_value $VALUE -r
+	   ;;
+	 spindown_time) 
+	   set_option -S$VALUE
+	   ;;
+	 interrupt_unmask) 
+	   eval_value $VALUE -u
+	   ;;
+	 write_cache) 
+	   eval_value $VALUE -W
+	   ;;
+	 transfer_mode) 
+	   set_option -X$VALUE
+	   ;;
+	 acoustic_management)
+	   set_option -M$VALUE
+	   ;;
+         keep_settings_over_reset)
+           eval_value $VALUE -k
+          ;;
+         keep_features_over_reset)
+           eval_value $VALUE -K
+          ;;
+         chipset_pio_mode)
+           set_option -p$VALUE
+          ;;
+	 *)
+	   log_failure_msg "Unknown option $KEY!"
+	   exit 1
+	   ;;
+       esac
+    ;;
+    "")
+       case $KEY in
+         })
+	   if [ -z "$DISC" ]; then
+             if [ "$WAS_RUN" != 1 ]; then
+	       log_failure_msg "No disk enabled. Exiting..."
+	       exit 1
+             fi
+	   fi
+	   if [ -n "$OPTIONS" ]; then
+	     # Flush the drive's internal write cache to the disk.
+	     /sbin/hdparm -q -f $DISC
+
+	     /sbin/hdparm $OPTIONS $DISC
+	     [ "$VERBOSE" != no ] && log_success_msg "Found enabled disk: $DISC"
+	   fi       
+           ;;
+         quiet)
+	   if [ -n "$DISC" ]; then
+	     OPT_QUIET=-q
+	   else
+	     DEF_QUIET=-q
+	   fi
+           ;;
+         standby) 
+           set_option -y
+	   ;;
+         sleep) 
+           set_option -Y
+	   ;;
+         disable_seagate) 
+           set_option -Z
+	   ;;
+         *)
+	   log_failure_msg "Unknown option $KEY!"
+	   exit 1
+	   ;;
+       esac
+	   ;;
+   *)
+     log_failure_msg "Unknown separator $SEP!"
+     exit 1
+     ;;
+  esac
+else
+  $KEY $SEP $VALUE
+  NEXT_LINE=no-go
+  WAS_RUN=1
+fi
+done
+
+log_end_msg 0

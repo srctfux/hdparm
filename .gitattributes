@@ -1,0 +1,9 @@
+Changelog text eol=lf
+Changelog.* text eol=lf
+LICENSE.* text eol=lf
+Makefile text eol=lf
+Makefile.* text eol=lf
+README text eol=lf
+README.* text eol=lf
+*.c text eol=lf
+*.h text eol=lf

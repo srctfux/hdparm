@@ -1,0 +1,39 @@
+# Mingw-w64 win32 Makefile
+
+CC      = i686-w64-mingw32-gcc
+CFLAGS  = -O2 -Wall -Wextra -ffunction-sections -fdata-sections -static
+LDFLAGS = -s -Wl,--gc-sections
+
+
+all: hdparm.exe
+
+hdparm.exe: hdparm.o
+	$(CC) -o hdparm.exe hdparm.o identify.o rawio.o shm.o timer.o $(LDFLAGS)
+
+hdparm.o: identify.o rawio.o shm.o timer.o
+	$(CC) $(CFLAGS) -o hdparm.o -c hdparm.c
+
+identify.o:
+	$(CC) $(CFLAGS) -o identify.o -c identify.c
+
+rawio.o:
+	$(CC) $(CFLAGS) -o rawio.o -c ./win32/rawio.c
+
+shm.o:
+	$(CC) $(CFLAGS) -o shm.o -c ./win32/shm.c
+
+timer.o:
+	$(CC) $(CFLAGS) -o timer.o -c ./win32/timer.c
+
+
+doc: hdparm.8.html hdparm.8.txt
+
+hdparm.8.html: hdparm.8
+	man2html hdparm.8 | sed 1d > hdparm.8.html
+
+hdparm.8.txt: hdparm.8
+	groff -man -Tascii -P'-bcou' < hdparm.8 > hdparm.8.txt
+
+
+clean:
+	rm -f hdparm.exe *.o hdparm.8.html hdparm.8.txt

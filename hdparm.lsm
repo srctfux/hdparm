@@ -1,0 +1,62 @@
+Begin4
+Title:		hdparm
+Version:	6.9
+Entered-date:	2006-10-25
+Description:	hdparm - get/set hard disk parameters for Linux IDE drives.
+		v6.9 --Istdin fix, new -s flag, new SCT reporting, fixed -T x2 error..
+		v6.8 improve parsing/operation of --Istdin function
+		v6.7 misc fixes, new -H flag, fixed -C flag
+		v6.6 fix build on Redhat/Fedora
+		v6.5 fix -I bugs introduced in v6.4
+		v6.4 major update for -I, bug fix for -C
+		v6.3 report ATA revisions > 7
+		v6.2 major rework of ATA Security Commands
+		v6.1 bug fix for BLKGETSIZE
+		v6.0 bug fix for BLKGETSIZE64; new ATA Security Commands
+		v5.9 bug fix: -W1/-W0 now work again
+		v5.8 minor fixes
+		v5.7 bug fixes, --direct flag (O_DIRECT), other enhancements
+		v5.6 cleanups, new "-Istdout" flag, removed MAJOR-nr restrictions
+		v5.5 added debian scripts, minor fixes
+		v5.4 lots of fixes/updates, new timing measurement code
+		v5.3 endian fixes, other stuff
+		v5.2 compile fixes for 2.5.xx
+		v5.1 fixed segfault in "-i" on older drives
+		v5.0 lots of updates and new features
+		v4.9 fixed compile error with 2.5.xx kernels
+		v4.8 changed -Q to allow specifying queue depth
+		v4.7 added -z, -Q, -M flags; expanded parm range for -p
+		v4.6 manpage updates, version number corrections
+		v4.5 cleanups, mostly courtesy of Maciej W. Rozycki
+		v4.4 added -b option get/set bus state
+		v4.3 use unsigned format for most stuff
+		v4.2 lots of updates, rewritten -I option
+		v4.0 no such version ever released
+		v3.9 support for ide[6-9], more cosmetics
+		v3.8 added -E, -R, and -U options; cosmetic fixes
+		v3.7 added UDMA mode display
+		v3.6 mostly cosmetic fixes, xt & ide4+ide5 support
+		v3.5 fixed udma display/compile for older kernels
+		v3.4 mostly cosmetic updates
+		v3.3 add -C, -y, -Y flags for power management
+		v3.2 flush buffer cache after -t or -T
+		v3.1 add support for "-p[6789]"
+		v3.0 move cache timings to new -T option
+		v2.9 update author's email addr; document -I option
+		v2.8 some fixes; removed "Estimating raw driver speed" from -t
+		v2.7 fixed "hdparm -c" (broke in 2.6); fixed .lsm file
+		v2.6 added "-p" flag to set IDE interface chipset PIO modes
+		v2.5 cosmetic fixes, manpage clarifications
+		v2.4 added support for -d (DMA) flag
+		v2.3 added runtime flags for 32-bit mode; fixed -t for SCSI.
+		v2.0 adds zillions of features for the new (E)IDE driver
+Keywords:	ide eide ata atapi performance kernel cd cdrom disk device driver
+Author:		mlord@pobox.com (Mark Lord)
+Maintained-by:	mlord@pobox.com (Mark Lord)
+Primary-site:	http://sourceforge.net/projects/hdparm/
+Alternate-site:	http://www.ibiblio.org/pub/Linux/system/hardware
+		47K hdparm-6.9.tar.gz
+		1K hdparm.lsm
+Platforms:	Linux, kernels 2.2 through 2.6
+Copying-policy:	BSD License
+End
